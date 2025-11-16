@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Database Pasien Realtime</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+body { padding: 20px; background: #f8f9fa; font-family: Arial, sans-serif; }
+h1, h5 { text-align: center; margin-bottom:0; }
+#login-page { max-width: 400px; margin: 100px auto; }
+td[contenteditable="true"] { background-color: #fff8dc; padding:2px 5px; }
+.table-container { overflow-y:auto; max-height:500px; border:1px solid #dee2e6; border-radius:5px; }
+table.table { width:100%; table-layout: fixed; border-collapse: collapse; }
+table th, table td { text-align:center; vertical-align: middle; white-space: nowrap; border:1px solid #dee2e6; overflow:hidden; text-overflow: ellipsis; }
+.col-no { width: 80px; }
+.col-rm { width: 150px; }
+.col-nama { width: 200px; }
+.col-nik { width: 180px; }
+.col-alamat { width: 200px; }
+.col-faskes { width: 150px; }
+.col-aksi { width: 100px; }
+.action-btn { cursor:pointer; margin:0 5px; font-size:1.2em; display:inline-block; transition: transform 0.2s; }
+.action-btn:hover { transform: scale(1.2); }
+#logout-btn { display:block; margin:5px auto 20px auto; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN PAGE -->
+<div id="login-page" class="text-center">
+    <h2 class="mb-4">Login Database Pasien</h2>
+    <input type="text" id="username" class="form-control mb-2" placeholder="Username">
+    <input type="password" id="password" class="form-control mb-2" placeholder="Password">
+    <button class="btn btn-primary mt-2" onclick="login()">Login</button>
+    <p id="login-msg" class="text-danger mt-2"></p>
+</div>
+
+<!-- MAIN PAGE -->
+<div id="main-page" style="display:none;">
+    <div class="d-flex flex-column align-items-center mb-3">
+        <h1>DATABASE PASIEN</h1>
+        <h5>Perekam Medis: Yeremia Zai</h5>
+        <button id="logout-btn" class="btn btn-warning btn-sm" onclick="logout()">🔒 Logout</button>
+    </div>
+
+    <div class="mb-3">
+        <input type="text" id="searchInput" class="form-control" placeholder="Cari data..." onkeyup="searchTable()">
+        <button class="btn btn-success mt-2" onclick="exportToExcel()">📥 Export ke Excel</button>
+    </div>
+
+    <ul class="nav nav-tabs mb-3">
+        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#sheet1">PASIEN BARU BPJS</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#sheet2">BPJS FASKES LUAR</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#sheet3">PASIEN UMUM NON BPJS</button></li>
+    </ul>
+
+    <!-- SHEET 1 -->
+    <div class="tab-content">
+        <div class="tab-pane fade show active" id="sheet1">
+            <div class="table-container mb-2">
+                <table id="table1" class="table table-striped table-bordered">
+                    <thead class="table-dark">
+                        <tr>
+                            <th class="col-no">No Urutan</th>
+                            <th class="col-rm">Nomor Rekam Medis Baru</th>
+                            <th class="col-nama">Nama Pasien</th>
+                            <th class="col-nik">NIK / No BPJS</th>
+                            <th class="col-alamat">Alamat Pasien</th>
+                            <th class="col-aksi">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <button class="btn btn-primary mb-3" onclick="addRow('sheet1')">➕ Tambah Baris</button>
+        </div>
+
+        <!-- SHEET 2 -->
+        <div class="tab-pane fade" id="sheet2">
+            <div class="table-container mb-2">
+                <table id="table2" class="table table-striped table-bordered">
+                    <thead class="table-dark">
+                        <tr>
+                            <th class="col-no">No Urutan</th>
+                            <th class="col-rm">Nomor Rekam Medis Baru Faskes Luar</th>
+                            <th class="col-nama">Nama Pasien</th>
+                            <th class="col-nik">NIK / No BPJS</th>
+                            <th class="col-alamat">Alamat Pasien</th>
+                            <th class="col-faskes">Asal Faskes</th>
+                            <th class="col-aksi">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <button class="btn btn-primary mb-3" onclick="addRow('sheet2')">➕ Tambah Baris</button>
+        </div>
+
+        <!-- SHEET 3 -->
+        <div class="tab-pane fade" id="sheet3">
+            <div class="table-container mb-2">
+                <table id="table3" class="table table-striped table-bordered">
+                    <thead class="table-dark">
+                        <tr>
+                            <th class="col-no">No Urutan</th>
+                            <th class="col-rm">Nomor Rekam Medis Baru</th>
+                            <th class="col-nama">Nama Pasien</th>
+                            <th class="col-nik">NIK Pasien</th>
+                            <th class="col-alamat">Alamat Pasien</th>
+                            <th class="col-aksi">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <button class="btn btn-primary mb-3" onclick="addRow('sheet3')">➕ Tambah Baris</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+<script>
+// ======= GANTI FIREBASE CONFIG ANDA =======
+const firebaseConfig = {
+  apiKey: "AIzaSyBNWwYHwlMYDj32t1z_yg6ko5G1F1VzVp0",
+  authDomain: "fir-config-9c7cd.firebaseapp.com",
+  databaseURL: "https://fir-config-9c7cd-default-rtdb.firebaseio.com/",
+  projectId: "fir-config-9c7cd",
+  storageBucket: "fir-config-9c7cd.firebasestorage.app",
+  messagingSenderId: "1:1002765521792:web:d1dd49ed986dff61e46765",
+  appId: "1:1002765521792:web:d1dd49ed986dff61e46765"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// ======= LOGIN =======
+const USERNAME="Zai";
+const PASSWORD="12345";
+function login(){
+    let user=document.getElementById("username").value;
+    let pass=document.getElementById("password").value;
+    if(user===USERNAME && pass===PASSWORD){
+        document.getElementById("login-page").style.display="none";
+        document.getElementById("main-page").style.display="block";
+        loadData();
+    } else {
+        document.getElementById("login-msg").innerText="Username atau password salah!";
+    }
+}
+function logout(){
+    document.getElementById("main-page").style.display="none";
+    document.getElementById("login-page").style.display="block";
+    document.getElementById("username").value="";
+    document.getElementById("password").value="";
+}
+
+// ======= TABLE =======
+function addRow(sheet){
+    const table=document.querySelector(`#${sheet} tbody`);
+    const columns=sheet==="sheet2"?6:5;
+    const row=table.insertRow();
+    for(let i=0;i<columns;i++){
+        let cell=row.insertCell();
+        cell.contentEditable=true;
+        cell.style.overflow="hidden";
+        cell.style.textOverflow="ellipsis";
+    }
+    addActionCell(row,sheet);
+}
+function addActionCell(row,sheet){
+    let actionCell=row.insertCell();
+    actionCell.classList.add('col-aksi');
+    actionCell.innerHTML=`<span class="action-btn text-success" onclick="saveRow(this,'${sheet}')">💾</span>
+                          <span class="action-btn text-danger" onclick="deleteRow(this,'${sheet}')">🗑️</span>`;
+}
+function saveRow(btn,sheet){
+    saveAll(sheet);
+    alert("Data berhasil disimpan di cloud!");
+}
+function deleteRow(btn,sheet){
+    const row=btn.parentNode.parentNode;
+    row.parentNode.removeChild(row);
+    saveAll(sheet);
+}
+function saveAll(sheet){
+    const table=document.querySelector(`#${sheet} tbody`);
+    let data=[];
+    for(let r=0;r<table.rows.length;r++){
+        let rowData=[];
+        for(let c=0;c<table.rows[r].cells.length-1;c++){
+            rowData.push(table.rows[r].cells[c].innerText);
+        }
+        data.push(rowData);
+    }
+    db.ref(sheet).set(data);
+}
+
+// ======= LOAD DATA =======
+function loadData(){
+    ['sheet1','sheet2','sheet3'].forEach(sheet=>{
+        db.ref(sheet).on('value', snapshot=>{
+            const table=document.querySelector(`#${sheet} tbody`);
+            table.innerHTML="";
+            const data=snapshot.val()||[];
+            data.forEach(rowData=>{
+                const row=table.insertRow();
+                rowData.forEach(cellData=>{
+                    const cell=row.insertCell();
+                    cell.contentEditable=true;
+                    cell.innerText=cellData;
+                    cell.style.overflow="hidden";
+                    cell.style.textOverflow="ellipsis";
+                });
+                addActionCell(row,sheet);
+            });
+        });
+    });
+}
+
+// ======= SEARCH & EXPORT =======
+function searchTable(){
+    const val=document.getElementById("searchInput").value.toLowerCase();
+    ['sheet1','sheet2','sheet3'].forEach(sheet=>{
+        const table=document.querySelector(`#${sheet} tbody`);
+        for(let r=0;r<table.rows.length;r++){
+            let row=table.rows[r];
+            let rowText="";
+            for(let c=0;c<row.cells.length-1;c++){
+                rowText+=row.cells[c].innerText.toLowerCase();
+            }
+            row.style.display=rowText.includes(val)?"":"none";
+        }
+    });
+}
+function exportToExcel(){
+    const wb=XLSX.utils.book_new();
+    ['table1','table2','table3'].forEach((tableId,index)=>{
+        const table=document.getElementById(tableId);
+        const ws=XLSX.utils.table_to_sheet(table);
+        XLSX.utils.book_append_sheet(wb,ws,'Sheet'+(index+1));
+    });
+    XLSX.writeFile(wb,'Database_Pasien.xlsx');
+}
+</script>
+</body>
+</html>
